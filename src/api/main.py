@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src import __version__
-from src.api.routes import advertisers_router, jobs_router, keywords_router
+from src.api.routes import adcopy_router, advertisers_router, jobs_router, keywords_router
 from src.api.schemas import HealthResponse
 from src.config import settings
 from src.database.connection import async_engine, init_async_db
@@ -56,12 +56,14 @@ def create_app() -> FastAPI:
         - **Keyword Expansion**: Discover more keywords advertisers bid on
         - **Spend Estimation**: Estimate advertising spend based on position data
         - **Competitor Analysis**: Find and compare competing advertisers
+        - **AI Ad Copy Generation**: Generate high-conversion ad copies using AI
 
         ## API Sections
 
         - **/api/keywords**: Manage seed keywords and view results
         - **/api/advertisers**: View discovered advertisers and their data
         - **/api/jobs**: Monitor and manage crawl jobs
+        - **/api/adcopy**: Generate and manage AI-powered ad copies
         """,
         version=__version__,
         lifespan=lifespan,
@@ -82,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(keywords_router)
     app.include_router(advertisers_router)
     app.include_router(jobs_router)
+    app.include_router(adcopy_router)
 
     # Exception handlers
     @app.exception_handler(HTTPException)

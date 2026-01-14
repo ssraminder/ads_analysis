@@ -63,6 +63,16 @@ class Settings(BaseSettings):
         description="Oxylabs password"
     )
 
+    # AI / LLM
+    ANTHROPIC_API_KEY: Optional[str] = Field(
+        default=None,
+        description="Anthropic API key for AI ad copy generation"
+    )
+    AI_MODEL: str = Field(
+        default="claude-sonnet-4-20250514",
+        description="AI model to use for ad copy generation"
+    )
+
     # Scraping Settings
     SCRAPE_DELAY_MIN_SECONDS: int = Field(
         default=30,

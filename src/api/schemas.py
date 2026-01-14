@@ -252,6 +252,69 @@ class PaginatedResponse(BaseModel):
     pages: int
 
 
+# ============== Ad Copy Generation Schemas ==============
+
+class AdCopyGenerateRequest(BaseModel):
+    """Schema for ad copy generation request."""
+    business_name: Optional[str] = Field(None, max_length=100)
+    business_description: Optional[str] = Field(None, max_length=500)
+    target_audience: Optional[str] = Field(None, max_length=200)
+    tone: str = Field(
+        default="professional",
+        description="Tone of ad copy: professional, friendly, urgent, luxurious, casual, authoritative, playful, trustworthy"
+    )
+    conversion_focus: str = Field(
+        default="clicks",
+        description="Optimization goal: clicks, leads, sales, brand_awareness, sign_ups, downloads, calls, store_visits"
+    )
+    num_variations: int = Field(default=3, ge=1, le=10)
+    unique_selling_points: Optional[List[str]] = Field(None, max_length=10)
+    use_competitor_insights: bool = Field(default=True)
+
+
+class GeneratedAdCopyResponse(BaseModel):
+    """Schema for generated ad copy response."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: Optional[int] = None
+    keyword_id: int
+    headline_1: str
+    headline_2: str
+    headline_3: Optional[str]
+    description_1: str
+    description_2: Optional[str]
+    display_path_1: Optional[str]
+    display_path_2: Optional[str]
+    call_to_action: Optional[str]
+    target_audience: Optional[str]
+    unique_selling_points: Optional[List[str]]
+    tone: str
+    conversion_focus: Optional[str]
+    quality_score: Optional[int]
+    is_favorite: bool = False
+    created_at: Optional[datetime] = None
+
+
+class AdCopyBulkGenerateRequest(BaseModel):
+    """Schema for bulk ad copy generation."""
+    keyword_ids: List[int] = Field(..., min_length=1, max_length=20)
+    business_name: Optional[str] = None
+    business_description: Optional[str] = None
+    tone: str = "professional"
+    conversion_focus: str = "clicks"
+    num_variations: int = Field(default=2, ge=1, le=5)
+
+
+class AdCopyImproveRequest(BaseModel):
+    """Schema for ad copy improvement request."""
+    original_headline: str = Field(..., max_length=90)
+    original_description: str = Field(..., max_length=180)
+    improvement_goal: str = Field(
+        default="higher_ctr",
+        description="Goal: higher_ctr, more_conversions, better_quality_score"
+    )
+
+
 # ============== Health Check ==============
 
 class HealthResponse(BaseModel):

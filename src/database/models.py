@@ -323,6 +323,50 @@ class CrawlJob(Base):
         return f"<CrawlJob(id={self.id}, type={self.job_type}, target='{self.target}')>"
 
 
+class GeneratedAdCopy(Base):
+    """AI-generated ad copies for keywords."""
+
+    __tablename__ = "generated_ad_copies"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    keyword_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("keywords.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    headline_1: Mapped[str] = mapped_column(String(30), nullable=False)  # Google Ads limit
+    headline_2: Mapped[str] = mapped_column(String(30), nullable=False)
+    headline_3: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    description_1: Mapped[str] = mapped_column(String(90), nullable=False)  # Google Ads limit
+    description_2: Mapped[Optional[str]] = mapped_column(String(90), nullable=True)
+    display_path_1: Mapped[Optional[str]] = mapped_column(String(15), nullable=True)
+    display_path_2: Mapped[Optional[str]] = mapped_column(String(15), nullable=True)
+    call_to_action: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    target_audience: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    unique_selling_points: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    tone: Mapped[str] = mapped_column(String(50), default="professional", nullable=False)
+    conversion_focus: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    competitor_insights_used: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    quality_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 1-10
+    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+
+    # Relationships
+    keyword: Mapped["Keyword"] = relationship("Keyword", backref="generated_copies")
+
+    __table_args__ = (
+        Index("ix_generated_ad_copies_keyword_created", "keyword_id", "created_at"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<GeneratedAdCopy(id={self.id}, keyword_id={self.keyword_id})>"
+
+
 class ProxyHealth(Base):
     """Health tracking for proxy servers."""
 

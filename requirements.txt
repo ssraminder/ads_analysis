@@ -21,6 +21,9 @@ httpx==0.26.0
 beautifulsoup4==4.12.3
 lxml==5.1.0
 
+# AI
+anthropic==0.40.0
+
 # Utilities
 tenacity==8.2.3
 tldextract==5.1.1

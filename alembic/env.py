@@ -15,6 +15,7 @@ from src.database.models import (
     AdAppearance,
     Advertiser,
     CrawlJob,
+    GeneratedAdCopy,
     Keyword,
     KeywordAdvertiserStats,
     ProxyHealth,

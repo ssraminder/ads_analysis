@@ -1,0 +1,39 @@
+# Core
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Task Queue
+celery[redis]==5.3.6
+redis==5.0.1
+
+# Web Scraping
+playwright==1.41.0
+httpx==0.26.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
+
+# Utilities
+tenacity==8.2.3
+tldextract==5.1.1
+fake-useragent==1.4.0
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+httpx==0.26.0
+
+# Development
+black==24.1.0
+isort==5.13.2
+mypy==1.8.0

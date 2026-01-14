@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # FastAPI REST API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ads_crawler_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://adscraper:adscraper_pass@db:5432/adscraper
+      - DATABASE_ASYNC_URL=postgresql+asyncpg://adscraper:adscraper_pass@db:5432/adscraper
+      - REDIS_URL=redis://redis:6379/0
+      - API_DEBUG=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Celery Worker for scraping tasks
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ads_crawler_worker
+    command: celery -A src.tasks.celery_app worker --loglevel=info --concurrency=4 -Q scraping,expansion
+    environment:
+      - DATABASE_URL=postgresql://adscraper:adscraper_pass@db:5432/adscraper
+      - DATABASE_ASYNC_URL=postgresql+asyncpg://adscraper:adscraper_pass@db:5432/adscraper
+      - REDIS_URL=redis://redis:6379/0
+      - MAX_CONCURRENT_SCRAPERS=4
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+    restart: unless-stopped
+
+  # Celery Beat Scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ads_crawler_scheduler
+    command: celery -A src.tasks.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://adscraper:adscraper_pass@db:5432/adscraper
+      - DATABASE_ASYNC_URL=postgresql+asyncpg://adscraper:adscraper_pass@db:5432/adscraper
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: ads_crawler_db
+    environment:
+      - POSTGRES_USER=adscraper
+      - POSTGRES_PASSWORD=adscraper_pass
+      - POSTGRES_DB=adscraper
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adscraper -d adscraper"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery broker and caching
+  redis:
+    image: redis:7-alpine
+    container_name: ads_crawler_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # Flower for Celery monitoring (optional)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ads_crawler_flower
+    command: celery -A src.tasks.celery_app flower --port=5555
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: ads_crawler_network

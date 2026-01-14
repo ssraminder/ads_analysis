@@ -265,6 +265,14 @@ class GoogleSerpScraper:
                     timeout=settings.REQUEST_TIMEOUT_SECONDS * 1000,
                 )
 
+                # Debug: Log page URL and title
+                current_url = page.url
+                page_title = await page.title()
+                logger.info(f"Page loaded - URL: {current_url}, Title: {page_title}")
+
+                # Handle Google consent dialog if present
+                await self._handle_consent_dialog(page)
+
                 # Human-like delay after page load
                 await asyncio.sleep(random.uniform(1, 3))
 
@@ -351,6 +359,52 @@ class GoogleSerpScraper:
             logger.error(f"Error scraping '{keyword}': {e}")
 
         return result
+
+    async def _handle_consent_dialog(self, page: Page) -> None:
+        """Handle Google cookie consent dialog if present."""
+        consent_selectors = [
+            # Google consent dialog buttons
+            "button:has-text('Accept all')",
+            "button:has-text('Accept All')",
+            "button:has-text('I agree')",
+            "button:has-text('Agree')",
+            "[aria-label='Accept all']",
+            "[aria-label='Accept All']",
+            "#L2AGLb",  # Common Google consent button ID
+            "button[id*='accept']",
+            "button[id*='agree']",
+            # EU consent buttons
+            ".QS5gu.sy4vM",  # Google's consent button class
+        ]
+
+        for selector in consent_selectors:
+            try:
+                button = await page.query_selector(selector)
+                if button:
+                    logger.info(f"Found consent dialog, clicking: {selector}")
+                    await button.click()
+                    await asyncio.sleep(1)  # Wait for dialog to close
+                    return
+            except Exception as e:
+                logger.debug(f"Consent selector {selector} failed: {e}")
+
+        # Also check for consent iframe
+        try:
+            frames = page.frames
+            for frame in frames:
+                if "consent" in frame.url.lower():
+                    for selector in consent_selectors[:5]:  # Try main buttons
+                        try:
+                            button = await frame.query_selector(selector)
+                            if button:
+                                logger.info(f"Found consent in iframe, clicking: {selector}")
+                                await button.click()
+                                await asyncio.sleep(1)
+                                return
+                        except Exception:
+                            pass
+        except Exception as e:
+            logger.debug(f"Iframe consent check failed: {e}")
 
     async def _wait_for_ads(self, page: Page, timeout_ms: int = 5000) -> None:
         """Wait for ad elements to load."""

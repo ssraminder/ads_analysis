@@ -77,13 +77,28 @@ async def _scrape_keyword_async(
             logger.error(f"Keyword {keyword_id} not found")
             return {"error": "Keyword not found"}
 
-        # Create or update job record
-        job = await job_repo.create(
-            job_type=JobType.KEYWORD_SCRAPE,
-            target=keyword.keyword,
-            priority=keyword.crawl_priority,
-        )
-        job.celery_task_id = current_task.request.id if current_task else None
+        # Try to find existing pending job for this keyword (created by API), or create new one
+        celery_task_id = current_task.request.id if current_task else None
+        job = None
+
+        # Look for job with matching celery_task_id first
+        if celery_task_id:
+            from sqlalchemy import select
+            from src.database.models import CrawlJob
+            result = await session.execute(
+                select(CrawlJob).where(CrawlJob.celery_task_id == celery_task_id)
+            )
+            job = result.scalar_one_or_none()
+
+        # If no existing job found, create a new one
+        if not job:
+            job = await job_repo.create(
+                job_type=JobType.KEYWORD_SCRAPE,
+                target=keyword.keyword,
+                priority=keyword.crawl_priority,
+            )
+            job.celery_task_id = celery_task_id
+
         await job_repo.update_status(job.id, JobStatus.RUNNING)
 
         try:

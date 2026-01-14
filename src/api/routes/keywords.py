@@ -15,9 +15,10 @@ from src.api.schemas import (
     SuggestionsResponse,
 )
 from src.database.connection import get_async_db
-from src.database.models import KeywordSource
+from src.database.models import JobStatus, JobType, KeywordSource
 from src.database.repositories import (
     AdvertiserRepository,
+    CrawlJobRepository,
     KeywordAdvertiserStatsRepository,
     KeywordRepository,
 )
@@ -200,24 +201,49 @@ async def scrape_keyword(
 ):
     """Trigger immediate scrape for a keyword."""
     repo = KeywordRepository(session)
+    job_repo = CrawlJobRepository(session)
 
     keyword = await repo.get_by_id(keyword_id)
     if not keyword:
         raise HTTPException(status_code=404, detail="Keyword not found")
 
-    # Queue the scrape task
-    task = scrape_keyword_task.delay(
-        keyword_id=keyword_id,
-        geo=request.geo,
-        device=request.device,
+    # Create job record immediately so it shows in the UI
+    job = await job_repo.create(
+        job_type=JobType.KEYWORD_SCRAPE,
+        target=keyword.keyword,
+        priority=keyword.crawl_priority,
     )
+    await session.commit()
+
+    # Try to queue the Celery task
+    task_id = None
+    task_error = None
+    try:
+        task = scrape_keyword_task.delay(
+            keyword_id=keyword_id,
+            geo=request.geo,
+            device=request.device,
+        )
+        task_id = task.id
+        # Update job with celery task ID
+        job.celery_task_id = task_id
+        await session.commit()
+    except Exception as e:
+        task_error = f"Celery not available: {str(e)}"
+        # Update job status to indicate worker needed
+        await job_repo.update_status(
+            job.id,
+            JobStatus.PENDING,
+            error="Waiting for Celery worker to pick up task"
+        )
+        await session.commit()
 
     return ScrapeResponse(
         keyword=keyword.keyword,
         ads_found=0,
         new_advertisers=0,
         response_time_ms=0,
-        error=f"Task queued: {task.id}",
+        error=f"Job #{job.id} created" + (f", Task: {task_id}" if task_id else f" ({task_error})"),
     )
 
 

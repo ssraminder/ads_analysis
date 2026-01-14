@@ -134,17 +134,37 @@ class AdExtractor:
         """
         ads = []
 
+        # Debug: Log what containers exist on the page
+        for selector in self.AD_CONTAINER_SELECTORS:
+            try:
+                el = await page.query_selector(selector)
+                if el:
+                    logger.info(f"Found ad container: {selector}")
+            except Exception:
+                pass
+
         # Try to find top ads container
         top_ads = await self._extract_ads_from_container(page, "#tads", is_top=True)
         ads.extend(top_ads)
+        logger.info(f"Top ads (#tads): found {len(top_ads)}")
 
         # Try to find bottom ads container
         bottom_ads = await self._extract_ads_from_container(page, "#tadsb", is_top=False)
         ads.extend(bottom_ads)
+        logger.info(f"Bottom ads (#tadsb): found {len(bottom_ads)}")
 
         # If no ads found with containers, try direct ad elements
         if not ads:
+            logger.info("No ads in containers, trying direct extraction")
             ads = await self._extract_ads_direct(page)
+
+        # Debug: Check for "Sponsored" text on page
+        try:
+            page_text = await page.inner_text("body")
+            has_sponsored = "sponsored" in page_text.lower()
+            logger.info(f"Page contains 'Sponsored' text: {has_sponsored}")
+        except Exception as e:
+            logger.debug(f"Could not check for Sponsored text: {e}")
 
         # Assign positions
         for i, ad in enumerate(ads, 1):

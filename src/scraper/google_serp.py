@@ -296,6 +296,21 @@ class GoogleSerpScraper:
                 # Extract ads
                 result.ads = await self.ad_extractor.extract_all_ads(page)
 
+                # Debug: If no ads found, save screenshot and HTML for debugging
+                if not result.ads:
+                    try:
+                        import os
+                        debug_dir = "/tmp/scraper_debug"
+                        os.makedirs(debug_dir, exist_ok=True)
+                        timestamp = int(time.time())
+                        await page.screenshot(path=f"{debug_dir}/no_ads_{timestamp}.png", full_page=True)
+                        html_content = await page.content()
+                        with open(f"{debug_dir}/no_ads_{timestamp}.html", "w") as f:
+                            f.write(html_content)
+                        logger.warning(f"No ads found - debug files saved to {debug_dir}/no_ads_{timestamp}.*")
+                    except Exception as e:
+                        logger.debug(f"Failed to save debug files: {e}")
+
                 # Save raw HTML if requested
                 if save_html:
                     result.raw_html = await page.content()

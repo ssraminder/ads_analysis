@@ -261,9 +261,16 @@ class GoogleSerpScraper:
 
                 await page.goto(
                     search_url,
-                    wait_until="domcontentloaded",
+                    wait_until="networkidle",  # Wait for JS to finish loading
                     timeout=settings.REQUEST_TIMEOUT_SECONDS * 1000,
                 )
+
+                # Wait for search results to appear
+                try:
+                    await page.wait_for_selector("#search, #rso, .g", timeout=10000)
+                    logger.info("Search results container found")
+                except Exception:
+                    logger.warning("Search results container not found, page may not have loaded properly")
 
                 # Debug: Log page URL and title
                 current_url = page.url

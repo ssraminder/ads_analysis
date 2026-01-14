@@ -42,9 +42,8 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install Playwright browsers
-RUN playwright install chromium && \
-    playwright install-deps chromium
+# Install Playwright browsers (deps already installed above)
+RUN playwright install chromium
 
 # Copy application code
 COPY . .

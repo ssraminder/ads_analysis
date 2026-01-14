@@ -1,11 +1,33 @@
 [phases.setup]
-nixPkgs = ["python311", "postgresql"]
+nixPkgs = [
+    "python311",
+    "postgresql",
+    # Playwright browser dependencies
+    "nss",
+    "nspr",
+    "atk",
+    "at-spi2-atk",
+    "cups",
+    "libdrm",
+    "libxkbcommon",
+    "xorg.libXcomposite",
+    "xorg.libXdamage",
+    "xorg.libXfixes",
+    "xorg.libXrandr",
+    "mesa",
+    "alsa-lib",
+    "pango",
+    "cairo",
+    "expat",
+    "glib",
+    "gtk3",
+    "dbus"
+]
 
 [phases.install]
 cmds = [
     "pip install -r requirements.txt",
-    "playwright install chromium",
-    "playwright install-deps chromium"
+    "playwright install chromium"
 ]
 
 [start]

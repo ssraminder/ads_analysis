@@ -63,18 +63,20 @@ class BrightDataProvider(ProxyProvider):
         self,
         api_key: Optional[str] = None,
         zone: Optional[str] = None,
+        password: Optional[str] = None,
     ):
         self.api_key = api_key or settings.BRIGHTDATA_API_KEY
         self.zone = zone or settings.BRIGHTDATA_ZONE
+        self.password = password or settings.BRIGHTDATA_PASSWORD
         self.host = "brd.superproxy.io"
-        self.port = 22225
+        self.port = 33335  # Residential proxy port
 
     @property
     def name(self) -> str:
         return "brightdata"
 
     def is_configured(self) -> bool:
-        return bool(self.api_key and self.zone)
+        return bool(self.api_key and self.zone and self.password)
 
     def get_proxy(self, geo: str = "US", session_id: Optional[str] = None) -> ProxyCredentials:
         """
@@ -103,7 +105,7 @@ class BrightDataProvider(ProxyProvider):
             host=self.host,
             port=self.port,
             username=username,
-            password=self.zone,
+            password=self.password,
             protocol="http",
         )
 

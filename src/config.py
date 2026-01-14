@@ -48,11 +48,15 @@ class Settings(BaseSettings):
     # Proxy Providers
     BRIGHTDATA_API_KEY: Optional[str] = Field(
         default=None,
-        description="Bright Data API key"
+        description="Bright Data customer ID (e.g., hl_xxxxxxxx)"
     )
     BRIGHTDATA_ZONE: Optional[str] = Field(
         default=None,
-        description="Bright Data zone"
+        description="Bright Data zone name"
+    )
+    BRIGHTDATA_PASSWORD: Optional[str] = Field(
+        default=None,
+        description="Bright Data zone password"
     )
     OXYLABS_USERNAME: Optional[str] = Field(
         default=None,

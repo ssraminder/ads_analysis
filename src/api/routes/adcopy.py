@@ -14,7 +14,7 @@ from src.api.schemas import (
     GeneratedAdCopyResponse,
 )
 from src.config import settings
-from src.database.connection import get_async_session
+from src.database.connection import get_async_db
 from src.database.models import (
     AdAppearance,
     GeneratedAdCopy,
@@ -40,7 +40,7 @@ async def generate_ad_copies(
     keyword_id: int,
     request: AdCopyGenerateRequest,
     save: bool = Query(default=True, description="Save generated copies to database"),
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_db),
 ) -> List[GeneratedAdCopyResponse]:
     """Generate ad copies for a keyword using AI."""
 
@@ -164,7 +164,7 @@ async def list_generated_copies(
     keyword_id: int,
     favorites_only: bool = Query(default=False),
     limit: int = Query(default=20, ge=1, le=100),
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_db),
 ) -> List[GeneratedAdCopyResponse]:
     """List generated ad copies for a keyword."""
 
@@ -193,7 +193,7 @@ async def improve_ad_copy(
     keyword_id: int,
     request: AdCopyImproveRequest,
     save: bool = Query(default=True),
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_db),
 ) -> GeneratedAdCopyResponse:
     """Improve an existing ad copy."""
 
@@ -277,7 +277,7 @@ async def improve_ad_copy(
 )
 async def toggle_favorite(
     ad_copy_id: int,
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_db),
 ) -> GeneratedAdCopyResponse:
     """Toggle favorite status of an ad copy."""
 
@@ -303,7 +303,7 @@ async def toggle_favorite(
 )
 async def delete_ad_copy(
     ad_copy_id: int,
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_db),
 ) -> dict:
     """Delete a generated ad copy."""
 

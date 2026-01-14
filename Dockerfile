@@ -6,7 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/app/.playwright
 
 # Set work directory
 WORKDIR /app
@@ -42,13 +43,14 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Install Playwright browsers (deps already installed above)
-RUN playwright install chromium
-
 # Copy application code
 COPY . .
 
-# Create non-root user
+# Install Playwright browsers to shared location (before switching user)
+RUN mkdir -p /app/.playwright && \
+    playwright install chromium
+
+# Create non-root user and set permissions
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser

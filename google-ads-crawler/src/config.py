@@ -21,10 +21,23 @@ class Settings(BaseSettings):
         default="postgresql://user:pass@localhost:5432/adscraper",
         description="PostgreSQL connection URL (sync)"
     )
-    DATABASE_ASYNC_URL: str = Field(
-        default="postgresql+asyncpg://user:pass@localhost:5432/adscraper",
-        description="PostgreSQL connection URL (async)"
+    DATABASE_ASYNC_URL: Optional[str] = Field(
+        default=None,
+        description="PostgreSQL connection URL (async) - auto-generated if not set"
     )
+
+    @property
+    def async_database_url(self) -> str:
+        """Get async database URL, auto-converting from DATABASE_URL if needed."""
+        if self.DATABASE_ASYNC_URL:
+            return self.DATABASE_ASYNC_URL
+        # Convert postgresql:// to postgresql+asyncpg://
+        url = self.DATABASE_URL
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
 
     # Redis
     REDIS_URL: str = Field(

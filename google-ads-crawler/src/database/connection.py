@@ -18,7 +18,7 @@ engine = create_engine(
 )
 
 async_engine = create_async_engine(
-    settings.DATABASE_ASYNC_URL,
+    settings.async_database_url,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,

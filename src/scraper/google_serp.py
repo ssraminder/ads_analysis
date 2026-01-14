@@ -244,6 +244,8 @@ class GoogleSerpScraper:
             # Add proxy if not direct connection
             if proxy.playwright_config:
                 context_options["proxy"] = proxy.playwright_config
+                # Trust proxy's SSL certificate (needed for Bright Data)
+                context_options["ignore_https_errors"] = True
 
             context = await browser.new_context(**context_options)
 

@@ -143,17 +143,24 @@ class AdExtractor:
             except Exception:
                 pass
 
-        # Try to find top ads container
-        top_ads = await self._extract_ads_from_container(page, "#tads", is_top=True)
-        ads.extend(top_ads)
-        logger.info(f"Top ads (#tads): found {len(top_ads)}")
+        # Method 1: Try text-based "Sponsored" locator (most reliable for 2024-2025)
+        sponsored_ads = await self._extract_ads_by_sponsored_text(page)
+        if sponsored_ads:
+            logger.info(f"Found {len(sponsored_ads)} ads via 'Sponsored' text locator")
+            ads.extend(sponsored_ads)
 
-        # Try to find bottom ads container
-        bottom_ads = await self._extract_ads_from_container(page, "#tadsb", is_top=False)
-        ads.extend(bottom_ads)
-        logger.info(f"Bottom ads (#tadsb): found {len(bottom_ads)}")
+        # Method 2: Try to find top ads container
+        if not ads:
+            top_ads = await self._extract_ads_from_container(page, "#tads", is_top=True)
+            ads.extend(top_ads)
+            logger.info(f"Top ads (#tads): found {len(top_ads)}")
 
-        # If no ads found with containers, try direct ad elements
+            # Try to find bottom ads container
+            bottom_ads = await self._extract_ads_from_container(page, "#tadsb", is_top=False)
+            ads.extend(bottom_ads)
+            logger.info(f"Bottom ads (#tadsb): found {len(bottom_ads)}")
+
+        # Method 3: If no ads found with containers, try direct ad elements
         if not ads:
             logger.info("No ads in containers, trying direct extraction")
             ads = await self._extract_ads_direct(page)
@@ -171,6 +178,46 @@ class AdExtractor:
             ad.position = i
 
         logger.info(f"Extracted {len(ads)} ads from page")
+        return ads
+
+    async def _extract_ads_by_sponsored_text(self, page: Page) -> List[AdData]:
+        """
+        Extract ads using text-based 'Sponsored' locator.
+        This is more reliable as it doesn't depend on CSS class names.
+        """
+        ads = []
+        try:
+            # Use Playwright's text locator to find elements containing "Sponsored"
+            # This finds the parent container of each "Sponsored" label
+            sponsored_locator = page.locator('div:has-text("Sponsored")')
+            count = await sponsored_locator.count()
+            logger.info(f"Found {count} elements with 'Sponsored' text")
+
+            if count == 0:
+                # Try alternate text
+                sponsored_locator = page.locator('span:has-text("Sponsored")')
+                count = await sponsored_locator.count()
+                logger.info(f"Found {count} span elements with 'Sponsored' text")
+
+            # Process each sponsored element
+            for i in range(min(count, 10)):  # Limit to 10 to avoid false positives
+                try:
+                    element = sponsored_locator.nth(i)
+                    # Get the parent div that contains the full ad
+                    # Usually the ad container is a few levels up
+                    ad_container = element.locator('xpath=ancestor::div[contains(@class, "uEierd") or @data-text-ad="1" or .//h3]').first
+
+                    el_handle = await ad_container.element_handle()
+                    if el_handle:
+                        ad_data = await self._extract_single_ad(el_handle, position=i + 1, is_top=True)
+                        if ad_data:
+                            ads.append(ad_data)
+                except Exception as e:
+                    logger.debug(f"Failed to extract sponsored ad {i}: {e}")
+
+        except Exception as e:
+            logger.debug(f"Error in text-based ad extraction: {e}")
+
         return ads
 
     async def _extract_ads_from_container(

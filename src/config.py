@@ -58,6 +58,14 @@ class Settings(BaseSettings):
         default=None,
         description="Bright Data zone password"
     )
+    BRIGHTDATA_SERP_API_TOKEN: Optional[str] = Field(
+        default=None,
+        description="Bright Data SERP API token"
+    )
+    BRIGHTDATA_SERP_ZONE: Optional[str] = Field(
+        default="serp_api1",
+        description="Bright Data SERP API zone name"
+    )
     OXYLABS_USERNAME: Optional[str] = Field(
         default=None,
         description="Oxylabs username"

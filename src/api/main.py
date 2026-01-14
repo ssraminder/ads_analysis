@@ -2,10 +2,12 @@
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src import __version__
 from src.api.routes import adcopy_router, advertisers_router, jobs_router, keywords_router
@@ -86,6 +88,11 @@ def create_app() -> FastAPI:
     app.include_router(jobs_router)
     app.include_router(adcopy_router)
 
+    # Mount static files
+    static_dir = Path(__file__).parent.parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
     # Exception handlers
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
@@ -136,16 +143,30 @@ def create_app() -> FastAPI:
             version=__version__,
         )
 
-    # Root endpoint
-    @app.get("/", tags=["root"])
+    # Root endpoint - serve dashboard
+    @app.get("/", tags=["root"], include_in_schema=False)
     async def root():
-        """API root endpoint."""
+        """Serve the dashboard."""
+        static_dir = Path(__file__).parent.parent / "static"
+        index_file = static_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
         return {
             "name": "Google Ads Competitive Intelligence Crawler",
             "version": __version__,
             "docs": "/docs",
             "health": "/health",
         }
+
+    # Dashboard route alias
+    @app.get("/dashboard", tags=["root"], include_in_schema=False)
+    async def dashboard():
+        """Serve the dashboard."""
+        static_dir = Path(__file__).parent.parent / "static"
+        index_file = static_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
+        return JSONResponse({"error": "Dashboard not found"}, status_code=404)
 
     return app
 

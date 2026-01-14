@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Ads Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#7C3AED',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-active { border-bottom: 2px solid #4F46E5; color: #4F46E5; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #4F46E5; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">Google Ads Intelligence</h1>
+                        <p class="text-sm text-gray-500">Competitive Analysis Dashboard</p>
+                    </div>
+                </div>
+                <div id="health-status" class="flex items-center space-x-2">
+                    <span class="w-2 h-2 bg-gray-300 rounded-full"></span>
+                    <span class="text-sm text-gray-500">Checking...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex space-x-8">
+                <button onclick="showTab('keywords')" id="tab-keywords" class="tab-btn py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent tab-active">
+                    Keywords
+                </button>
+                <button onclick="showTab('advertisers')" id="tab-advertisers" class="tab-btn py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent">
+                    Advertisers
+                </button>
+                <button onclick="showTab('adcopy')" id="tab-adcopy" class="tab-btn py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent">
+                    Ad Copy Generator
+                </button>
+                <button onclick="showTab('jobs')" id="tab-jobs" class="tab-btn py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent">
+                    Jobs
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Keywords Tab -->
+        <div id="content-keywords" class="tab-content fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Keywords</h2>
+                <button onclick="openAddKeywordModal()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Add Keyword</span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keyword</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Crawled</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="keywords-table" class="bg-white divide-y divide-gray-200">
+                        <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Loading keywords...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Advertisers Tab -->
+        <div id="content-advertisers" class="tab-content hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Discovered Advertisers</h2>
+                <div class="flex items-center space-x-3">
+                    <input type="text" id="advertiser-search" placeholder="Search domain..." class="border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="advertisers-grid">
+                <div class="col-span-full text-center py-12 text-gray-500">Loading advertisers...</div>
+            </div>
+        </div>
+
+        <!-- Ad Copy Generator Tab -->
+        <div id="content-adcopy" class="tab-content hidden fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Generator Form -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Generate Ad Copy</h3>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Select Keyword</label>
+                                <select id="adcopy-keyword" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
+                                    <option value="">Loading keywords...</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                                <input type="text" id="adcopy-business" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="Your Company">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+                                <textarea id="adcopy-description" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="What does your business offer?"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
+                                <input type="text" id="adcopy-audience" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="e.g., Small business owners">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tone</label>
+                                    <select id="adcopy-tone" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
+                                        <option value="professional">Professional</option>
+                                        <option value="friendly">Friendly</option>
+                                        <option value="urgent">Urgent</option>
+                                        <option value="luxurious">Luxurious</option>
+                                        <option value="casual">Casual</option>
+                                        <option value="authoritative">Authoritative</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Focus</label>
+                                    <select id="adcopy-focus" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
+                                        <option value="clicks">Clicks</option>
+                                        <option value="leads">Leads</option>
+                                        <option value="sales">Sales</option>
+                                        <option value="sign_ups">Sign Ups</option>
+                                        <option value="brand_awareness">Brand Awareness</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Variations</label>
+                                <input type="number" id="adcopy-variations" value="3" min="1" max="10" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="adcopy-competitor" checked class="rounded text-primary focus:ring-primary">
+                                <label class="ml-2 text-sm text-gray-700">Use competitor insights</label>
+                            </div>
+
+                            <button onclick="generateAdCopy()" id="generate-btn" class="w-full bg-gradient-to-r from-primary to-secondary text-white px-4 py-3 rounded-lg hover:opacity-90 transition font-medium">
+                                Generate Ad Copies
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Results -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Generated Ad Copies</h3>
+                        <div id="adcopy-results" class="space-y-4">
+                            <div class="text-center py-12 text-gray-500">
+                                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                <p>Select a keyword and click "Generate" to create AI-powered ad copies</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs Tab -->
+        <div id="content-jobs" class="tab-content hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Crawl Jobs</h2>
+                <button onclick="loadJobs()" class="text-primary hover:text-indigo-700 flex items-center space-x-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+
+            <!-- Job Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6" id="job-stats">
+                <div class="bg-white rounded-lg border p-4 text-center">
+                    <div class="text-2xl font-bold text-yellow-500" id="stat-pending">0</div>
+                    <div class="text-sm text-gray-500">Pending</div>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-center">
+                    <div class="text-2xl font-bold text-blue-500" id="stat-running">0</div>
+                    <div class="text-sm text-gray-500">Running</div>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-center">
+                    <div class="text-2xl font-bold text-green-500" id="stat-completed">0</div>
+                    <div class="text-sm text-gray-500">Completed</div>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-center">
+                    <div class="text-2xl font-bold text-red-500" id="stat-failed">0</div>
+                    <div class="text-sm text-gray-500">Failed</div>
+                </div>
+                <div class="bg-white rounded-lg border p-4 text-center">
+                    <div class="text-2xl font-bold text-gray-700" id="stat-total">0</div>
+                    <div class="text-sm text-gray-500">Total</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attempts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobs-table" class="bg-white divide-y divide-gray-200">
+                        <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Loading jobs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Keyword Modal -->
+    <div id="add-keyword-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Add New Keyword</h3>
+                <button onclick="closeAddKeywordModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Keyword</label>
+                    <input type="text" id="new-keyword" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary" placeholder="e.g., best crm software">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category (optional)</label>
+                    <input type="text" id="new-category" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary" placeholder="e.g., Software">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Priority (1-10)</label>
+                    <input type="number" id="new-priority" value="5" min="1" max="10" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary">
+                </div>
+                <button onclick="addKeyword()" class="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    Add Keyword
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg hidden transform transition-transform duration-300">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
